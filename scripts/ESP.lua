@@ -1,3 +1,4 @@
+-- Set the global ESP environment
 getgenv().ESP = {
     enabled = false,
     tracers = true,
@@ -20,17 +21,11 @@ getgenv().ESP = {
     facecamera = true,
     thickness = 1,
     attachShift = 1,
-    objects = setmetatable({}, {__mode = "kv"}),  -- Weak table to avoid memory leaks
+    objects = setmetatable({}, {__mode = "kv"}), -- Weak table to avoid memory leaks
     overrides = {}
 }
 
--- Declarations --
-local localplayer = game.Players.LocalPlayer
-local currentcamera = workspace.CurrentCamera
-local worldtoviewportpoint = currentcamera.WorldToViewportPoint
-
--- Functions --
-
+-- Utility functions
 local function draw(obj, props)
     local new = Drawing.new(obj)
     
@@ -43,8 +38,8 @@ local function draw(obj, props)
     return new
 end
 
-local function getplrfromchar(char)
-    local ov = ESP.overrides.getplrfromchar
+local function getPlrFromChar(char)
+    local ov = ESP.overrides.getPlrFromChar
     
     if ov then
         return ov(char)
@@ -53,16 +48,16 @@ local function getplrfromchar(char)
     return game.Players:GetPlayerFromCharacter(char)
 end
 
-local function toggle(bool)
-    ESP.enabled = bool
-    if not bool then
-        for i, v in pairs(ESP.objects) do
+local function toggle(enabled)
+    ESP.enabled = enabled
+    if not enabled then
+        for _, v in pairs(ESP.objects) do
             if v.type == "Box" then
                 if v.temporary then
                     v:remove()
                 else
-                    for i, v in pairs(v.components) do
-                        v.Visible = false
+                    for _, component in pairs(v.components) do
+                        component.Visible = false
                     end
                 end
             end
@@ -70,15 +65,15 @@ local function toggle(bool)
     end
 end
 
-local function GetBox(obj)
+local function getBox(obj)
     return ESP.objects[obj]
 end
 
-local function AddObjectListener(parent, options)
-    local function NewListener(c)
+local function addObjectListener(parent, options)
+    local function newListener(c)
         if (not options.Type or c:IsA(options.Type)) and (not options.Name or c.Name == options.Name) then
             if not options.Validator or options.Validator(c) then
-                local box = ESP:Add(c, {
+                local box = ESP:add(c, {
                     PrimaryPart = (type(options.PrimaryPart) == "string" and c:FindFirstChild(options.PrimaryPart)) or
                                   (type(options.PrimaryPart) == "function" and options.PrimaryPart(c)),
                     Color = (type(options.Color) == "function" and options.Color(c)) or options.Color,
@@ -96,30 +91,34 @@ local function AddObjectListener(parent, options)
     end
 
     if options.Recursive then
-        parent.DescendantAdded:Connect(NewListener)
+        parent.DescendantAdded:Connect(newListener)
         for _, v in ipairs(parent:GetDescendants()) do
-            task.spawn(NewListener, v)
+            task.spawn(newListener, v)
         end
     else
-        parent.ChildAdded:Connect(NewListener)
+        parent.ChildAdded:Connect(newListener)
         for _, v in ipairs(parent:GetChildren()) do
-            task.spawn(NewListener, v)
+            task.spawn(newListener, v)
         end
     end
 end
 
-local function Remove(self)
+-- Define the boxBase class with methods for remove and update
+local boxBase = {}
+boxBase.__index = boxBase
+
+function boxBase:remove()
     ESP.objects[self.Object] = nil
-    for _, v in pairs(self.Components) do
-        v.Visible = false
-        v:Remove()
+    for _, component in pairs(self.Components) do
+        component.Visible = false
+        component:Remove()
     end
     self.Components = {}
 end
 
-local function Update(self)
+function boxBase:update()
     if not self.PrimaryPart or not self.PrimaryPart:IsDescendantOf(workspace) then
-        return Remove(self)
+        return self:remove()
     end
 
     local color = ESP.Highlighted == self.Object and ESP.HighlightColor or self.Color or ESP.Color
@@ -139,8 +138,8 @@ local function Update(self)
     end
 
     if not allow then
-        for _, v in pairs(self.Components) do
-            v.Visible = false
+        for _, component in pairs(self.Components) do
+            component.Visible = false
         end
         return
     end
@@ -178,7 +177,8 @@ local function Update(self)
     end
 end
 
-local function ESP:Add(obj, options)
+-- Add an object to the ESP
+function ESP:add(obj, options)
     if not obj.Parent and not options.RenderInNil then
         return warn(obj, "has no parent")
     end
@@ -195,11 +195,11 @@ local function ESP:Add(obj, options)
         IsEnabled = options.IsEnabled,
         Temporary = options.Temporary,
         RenderInNil = options.RenderInNil
-    }, {__index = {Update = Update, Remove = Remove}})
+    }, boxBase)
 
     -- Prevent adding the same object again
-    if ESP:GetBox(obj) then
-        ESP:GetBox(obj):Remove()
+    if ESP:getBox(obj) then
+        ESP:getBox(obj):remove()
     end
 
     -- Adding drawing for the box
@@ -216,22 +216,23 @@ local function ESP:Add(obj, options)
     -- Handle object removal if it loses parent
     obj.AncestryChanged:Connect(function(_, parent)
         if not parent and ESP.AutoRemove then
-            box:Remove()
+            box:remove()
         end
     end)
 
     obj:GetPropertyChangedSignal("Parent"):Connect(function()
         if not obj.Parent and ESP.AutoRemove then
-            box:Remove()
+            box:remove()
         end
     end)
 
     return box
 end
 
+-- Event listeners for adding ESP to characters
 game.Players.PlayerAdded:Connect(function(p)
     p.CharacterAdded:Connect(function(char)
-        ESP:Add(char, {
+        ESP:add(char, {
             Name = p.Name,
             Player = p,
             PrimaryPart = char:WaitForChild("HumanoidRootPart")
@@ -239,9 +240,10 @@ game.Players.PlayerAdded:Connect(function(p)
     end)
 end)
 
+-- Loop through existing players and add ESP
 for _, v in pairs(game.Players:GetPlayers()) do
     if v ~= game.Players.LocalPlayer then
-        ESP:Add(v.Character, {
+        ESP:add(v.Character, {
             Name = v.Name,
             Player = v,
             PrimaryPart = v.Character and v.Character:FindFirstChild("HumanoidRootPart")
@@ -249,10 +251,11 @@ for _, v in pairs(game.Players:GetPlayers()) do
     end
 end
 
+-- Continuously update the ESP boxes during the RenderStepped event
 game:GetService("RunService").RenderStepped:Connect(function()
     for _, v in pairs(ESP.objects) do
-        if v.Update then
-            pcall(v.Update, v)
+        if v.update then
+            pcall(v.update, v)
         end
     end
 end)
