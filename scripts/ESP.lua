@@ -7,18 +7,17 @@ getgenv().ESP = {
     teamcolor = Color3.new(0, 1, 0),
     enemycolor = Color3.new(1, 0, 0),
     showteam = true,
-	info = {
-		["Name"] = true,
-		["Health"] = true,
-		["Weapons"] = true,
-		["Distance"] = true
-	},
-	
+    info = {
+        ["Name"] = true,
+        ["Health"] = true,
+        ["Weapons"] = true,
+        ["Distance"] = true
+    },
     boxshift = CFrame.new(0, -1.5, 0),
     boxsize = Vector3.new(4, 6, 0),
     color = Color3.fromRGB(255, 255, 255),
     targetplayers = true,
-    facecamera = true, -- i changed last time
+    facecamera = true,
     thickness = 1,
     attachShift = 1,
     objects = setmetatable({}, {__mode="kv"}),
@@ -125,7 +124,7 @@ function boxBase:Update()
         return self:Remove()
     end
 
-    local color = ESP.Highlighted == self.Object and ESP.HighlightColor or self.Color or ESP:GetColor(self.Object) or ESP.Color
+    local color = ESP.Highlighted == self.Object and ESP.HighlightColor or self.Color or ESP.Color
     local allow = true
 
     if ESP.Overrides.UpdateAllow and not ESP.Overrides.UpdateAllow(self) then
