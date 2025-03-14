@@ -1,28 +1,28 @@
 getgenv().ESP = {
-    Enabled = false,
-	Tracers = true,
-    Boxes = true,
-    ShowInfo = true,
-    UseTeamColor = true,
-	TeamColor = Color3.new(0, 1, 0),
-	EnemyColor = Color3.new(1, 0, 0),
-    ShowTeam = true,
-	Info = {
+    enabled = false,
+    tracers = true,
+    boxes = true,
+    showinfo = true,
+    useteamcolor = true,
+    teamcolor = Color3.new(0, 1, 0),
+    enemycolor = Color3.new(1, 0, 0),
+    showteam = true,
+	info = {
 		["Name"] = true,
 		["Health"] = true,
 		["Weapons"] = true,
 		["Distance"] = true
 	},
 	
-    BoxShift = CFrame.new(0, -1.5, 0),
-	BoxSize = Vector3.new(4, 6, 0),
-    Color = Color3.fromRGB(255, 255, 255),
-    TargetPlayers = true,
-    FaceCamera = true, -- i changed last time
-    Thickness = 1,
-    AttachShift = 1,
-    Objects = setmetatable({}, {__mode="kv"}),
-    Overrides = {}
+    boxshift = CFrame.new(0, -1.5, 0),
+    boxsize = Vector3.new(4, 6, 0),
+    color = Color3.fromRGB(255, 255, 255),
+    targetplayers = true,
+    facecamera = true, -- i changed last time
+    thickness = 1,
+    attachShift = 1,
+    objects = setmetatable({}, {__mode="kv"}),
+    overrides = {}
 }
 
 --Declarations--
@@ -321,18 +321,18 @@ function ESP:Add(obj, options)
     end
 
     local box = setmetatable({
-        Name = options.Name or obj.Name,
-        Type = "Box",
-        Color = options.Color --[[or self:GetColor(obj)]],
-        Size = options.Size or self.BoxSize,
-        Object = obj,
-        Player = options.Player or game.Players:GetPlayerFromCharacter(obj),
-        PrimaryPart = options.PrimaryPart or obj.ClassName == "Model" and (obj.PrimaryPart or obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChildWhichIsA("BasePart")) or obj:IsA("BasePart") and obj,
-        Components = {},
-        IsEnabled = options.IsEnabled,
-        Temporary = options.Temporary,
-        ColorDynamic = options.ColorDynamic,
-        RenderInNil = options.RenderInNil
+        name = options.Name or obj.Name,
+        type = "Box",
+        color = options.Color --[[or self:GetColor(obj)]],
+        size = options.Size or self.BoxSize,
+        object = obj,
+        player = options.Player or game.Players:GetPlayerFromCharacter(obj),
+        primaryPart = options.PrimaryPart or obj.ClassName == "Model" and (obj.PrimaryPart or obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChildWhichIsA("BasePart")) or obj:IsA("BasePart") and obj,
+        components = {},
+        isEnabled = options.IsEnabled,
+        temporary = options.Temporary,
+        colordynamic = options.ColorDynamic,
+        renderinnil = options.RenderInNil
     }, boxBase)
 
     if self:GetBox(obj) then
