@@ -1,4 +1,4 @@
-local ESP = {
+getgenv().ESP = {
     Enabled = false,
 	Tracers = true,
     Boxes = true,
