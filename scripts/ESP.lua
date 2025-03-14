@@ -107,9 +107,6 @@ local function AddObjectListener(parent, options)
     end
 end
 
-local boxBase = {}
-boxBase.__index = boxBase
-
 local function Remove(self)
     ESP.objects[self.Object] = nil
     for _, v in pairs(self.Components) do
@@ -121,7 +118,7 @@ end
 
 local function Update(self)
     if not self.PrimaryPart or not self.PrimaryPart:IsDescendantOf(workspace) then
-        return self:Remove()
+        return Remove(self)
     end
 
     local color = ESP.Highlighted == self.Object and ESP.HighlightColor or self.Color or ESP.Color
@@ -197,7 +194,7 @@ local function Add(obj, options)
         IsEnabled = options.IsEnabled,
         Temporary = options.Temporary,
         RenderInNil = options.RenderInNil
-    }, boxBase)
+    }, {__index = {Update = Update, Remove = Remove}})
 
     -- Prevent adding the same object again
     if ESP:GetBox(obj) then
