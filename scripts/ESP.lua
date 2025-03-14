@@ -178,7 +178,7 @@ local function Update(self)
     end
 end
 
-local function Add(obj, options)
+local function ESP:Add(obj, options)
     if not obj.Parent and not options.RenderInNil then
         return warn(obj, "has no parent")
     end
