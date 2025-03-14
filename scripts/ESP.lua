@@ -30,6 +30,7 @@ local currentcamera = workspace.CurrentCamera
 local worldtoviewportpoint = currentcamera.WorldToViewportPoint
 
 -- Functions --
+
 local function draw(obj, props)
     local new = Drawing.new(obj)
     
