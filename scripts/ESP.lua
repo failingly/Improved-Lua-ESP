@@ -20,7 +20,7 @@ getgenv().ESP = {
     facecamera = true,
     thickness = 1,
     attachShift = 1,
-    objects = setmetatable({}, {__mode="kv"}),
+    objects = setmetatable({}, {__mode = "kv"}),  -- Weak table to avoid memory leaks
     overrides = {}
 }
 
@@ -42,8 +42,8 @@ local function draw(obj, props)
     return new
 end
 
-function esp:getplrfromchar(char)
-    local ov = self.overrides.getplrfromchar
+local function getplrfromchar(char)
+    local ov = ESP.overrides.getplrfromchar
     
     if ov then
         return ov(char)
@@ -52,10 +52,10 @@ function esp:getplrfromchar(char)
     return game.Players:GetPlayerFromCharacter(char)
 end
 
-function esp:toggle(bool)
-    self.enabled = bool
+local function toggle(bool)
+    ESP.enabled = bool
     if not bool then
-        for i, v in pairs(self.objects) do
+        for i, v in pairs(ESP.objects) do
             if v.type == "Box" then
                 if v.temporary then
                     v:remove()
@@ -69,15 +69,15 @@ function esp:toggle(bool)
     end
 end
 
-function ESP:GetBox(obj)
-    return self.Objects[obj]
+local function GetBox(obj)
+    return ESP.objects[obj]
 end
 
-function ESP:AddObjectListener(parent, options)
+local function AddObjectListener(parent, options)
     local function NewListener(c)
         if (not options.Type or c:IsA(options.Type)) and (not options.Name or c.Name == options.Name) then
             if not options.Validator or options.Validator(c) then
-                local box = self:Add(c, {
+                local box = ESP:Add(c, {
                     PrimaryPart = (type(options.PrimaryPart) == "string" and c:FindFirstChild(options.PrimaryPart)) or
                                   (type(options.PrimaryPart) == "function" and options.PrimaryPart(c)),
                     Color = (type(options.Color) == "function" and options.Color(c)) or options.Color,
@@ -110,8 +110,8 @@ end
 local boxBase = {}
 boxBase.__index = boxBase
 
-function boxBase:Remove()
-    ESP.Objects[self.Object] = nil
+local function Remove(self)
+    ESP.objects[self.Object] = nil
     for _, v in pairs(self.Components) do
         v.Visible = false
         v:Remove()
@@ -119,7 +119,7 @@ function boxBase:Remove()
     self.Components = {}
 end
 
-function boxBase:Update()
+local function Update(self)
     if not self.PrimaryPart or not self.PrimaryPart:IsDescendantOf(workspace) then
         return self:Remove()
     end
@@ -180,7 +180,7 @@ function boxBase:Update()
     end
 end
 
-function ESP:Add(obj, options)
+local function Add(obj, options)
     if not obj.Parent and not options.RenderInNil then
         return warn(obj, "has no parent")
     end
@@ -189,7 +189,7 @@ function ESP:Add(obj, options)
         Name = options.Name or obj.Name,
         Type = "Box",
         Color = options.Color,
-        Size = options.Size or self.BoxSize,
+        Size = options.Size or ESP.BoxSize,
         Object = obj,
         Player = options.Player or game.Players:GetPlayerFromCharacter(obj),
         PrimaryPart = options.PrimaryPart or obj:FindFirstChild("HumanoidRootPart") or obj:IsA("BasePart") and obj,
@@ -199,20 +199,23 @@ function ESP:Add(obj, options)
         RenderInNil = options.RenderInNil
     }, boxBase)
 
-    if self:GetBox(obj) then
-        self:GetBox(obj):Remove()
+    -- Prevent adding the same object again
+    if ESP:GetBox(obj) then
+        ESP:GetBox(obj):Remove()
     end
 
-    box.Components["Quad"] = Draw("Quad", {
-        Thickness = self.Thickness,
+    -- Adding drawing for the box
+    box.Components["Quad"] = draw("Quad", {
+        Thickness = ESP.Thickness,
         Color = box.Color,
         Transparency = 1,
         Filled = false,
-        Visible = self.Enabled and self.Boxes
+        Visible = ESP.enabled and ESP.Boxes
     })
 
-    self.Objects[obj] = box
+    ESP.objects[obj] = box
 
+    -- Handle object removal if it loses parent
     obj.AncestryChanged:Connect(function(_, parent)
         if not parent and ESP.AutoRemove then
             box:Remove()
@@ -249,7 +252,7 @@ for _, v in pairs(game.Players:GetPlayers()) do
 end
 
 game:GetService("RunService").RenderStepped:Connect(function()
-    for _, v in pairs(ESP.Objects) do
+    for _, v in pairs(ESP.objects) do
         if v.Update then
             pcall(v.Update, v)
         end
