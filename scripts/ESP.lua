@@ -43,26 +43,6 @@ local function draw(obj, props)
     return new
 end
 
-function esp:getteam(p)
-    local ov = self.overrides.getteam
-    
-    if ov then
-        return ov(p)
-    end
-    
-    return p and p.Team
-end
-
-function esp:isteammate(p)
-    local ov = self.overrides.isteammate
-    
-    if ov then
-        return ov(p)
-    end
-    
-    return self:getteam(p) == self:getteam(localplayer)
-end
-
 function esp:getcolor(obj)
     local ov = self.overrides.getcolor
     
