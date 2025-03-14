@@ -65,7 +65,8 @@ local function toggle(enabled)
     end
 end
 
-local function getBox(obj)
+-- Get Box method restored
+function ESP:getBox(obj)
     return ESP.objects[obj]
 end
 
