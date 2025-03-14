@@ -43,18 +43,6 @@ local function draw(obj, props)
     return new
 end
 
-function esp:getcolor(obj)
-    local ov = self.overrides.getcolor
-    
-    if ov then
-        return ov(obj)
-    end
-    
-    local p = self:getplrfromchar(obj)
-    
-    return p and (self.useteamcolor and p.Team and p.Team.TeamColor.Color) or (p.Team and p.Team.TeamColor ~= localplayer.Team.TeamColor and self.enemycolor or self.teamcolor)
-end
-
 function esp:getplrfromchar(char)
     local ov = self.overrides.getplrfromchar
     
